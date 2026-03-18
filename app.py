@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import sqlite3
 
 #To run the streamlit, use cmd and go to the file location via cd "C:User\etc" then enter py -m streamlit run app.py in order to run it. It will open in the browser.
 
@@ -10,13 +11,11 @@ st.set_page_config(page_title="Project Argus Dashboard")
 # Team title
 st.title("Project Argus – Team Dashboard")
 
-# Placeholder data
-data = {
-    "Camera ID": ["Cam-01", "Cam-02", "Cam-03"],
-    "Status": ["Offline", "Offline", "Offline"],
-    "Detected Objects": [...,...,...],
-    "Last Updated": ["--", "--", "--"]
-}
+
+conn = sqlite3.connect("alerts.db")
+
+query = "SELECT camera_id, confidence, timestamp FROM events"
+df = pd.read_sql_query(query, conn)
 
 df = pd.DataFrame(data)
 
