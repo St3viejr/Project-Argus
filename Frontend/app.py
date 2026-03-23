@@ -2,16 +2,16 @@ import streamlit as st
 import pandas as pd
 import sqlite3
 
-''' This is the main Streamlit app for the Project Argus PSOC dashboard.
+#This is the main Streamlit app for the Project Argus PSOC dashboard.
 
-Functionality:
-    -Connects to the SQLite database 
-    -Retrieves the latest alerts 
-    -Displays them in a user-friendly format. 
+# Functionality:
+#    -Connects to the SQLite database 
+#    -Retrieves the latest alerts 
+#    -Displays them in a user-friendly format. 
 
-The app is designed to refresh every 2 seconds 
-to provide real-time updates on camera statuses and detected threats. 
-Custom CSS is used to style the alert boxes and make the interface visually appealing.'''
+# The app is designed to refresh every 2 seconds 
+# to provide real-time updates on camera statuses and detected threats. 
+# Custom CSS is used to style the alert boxes and make the interface visually appealing.'''
 
 
 st.set_page_config(page_title="Project Argus PSOC", layout="wide")
