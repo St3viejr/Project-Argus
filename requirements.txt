@@ -1,0 +1,9 @@
+opencv-python
+ultralytics
+requests
+jsonschema
+streamlit
+pandas
+fastapi
+uvicorn
+pydantic
