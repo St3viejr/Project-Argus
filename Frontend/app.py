@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 import sqlite3
+import base64
+import os
 
 #This is the main Streamlit app for the Project Argus PSOC dashboard.
 
@@ -8,13 +10,32 @@ import sqlite3
 #    -Connects to the SQLite database 
 #    -Retrieves the latest alerts 
 #    -Displays them in a user-friendly format. 
+#    -Has a sidebar with a shutdown button that signals the entire system to safely terminate.
+#    -Has history logs in an expander at the bottom for post-incident review.
 
-# The app is designed to refresh every 2 seconds 
+# The app is designed to refresh every 2 seconds, 
+# but you can also manually refresh by pressing "r" on the page to see updates immediately.
 # to provide real-time updates on camera statuses and detected threats. 
 # Custom CSS is used to style the alert boxes and make the interface visually appealing.'''
 
 
 st.set_page_config(page_title="Project Argus PSOC", layout="wide")
+
+# Side bar for shutdown button and instructions
+with st.sidebar:
+    st.header("Mission Control")
+    st.markdown("Use this panel to manage the Project Argus system.")
+    
+    st.markdown("---")
+    
+    if st.button("SHUTDOWN SYSTEM", use_container_width=True, type="primary"):
+        # Drop the signal file into the root folder (up one level from Frontend)
+        with open("../shutdown.signal", "w") as f:
+            f.write("terminate")
+        
+        st.success("Shutdown signal sent! You can safely close this browser tab.")
+        st.stop() # Stops the Streamlit UI from trying to refresh anymore
+
 
 # Custom css for alerts and overall styling
 st.markdown("""
@@ -49,7 +70,7 @@ st.title("Project Argus – Physical Security Operations Center (PSOC)")
 @st.fragment(run_every=2)
 def display_camera_status():
     try:
-        conn = sqlite3.connect("Backend/alerts.db")
+        conn = sqlite3.connect("../Backend/alerts.db")
         df_raw = pd.read_sql_query("SELECT camera_id, confidence, timestamp, image_data FROM events ORDER BY timestamp ASC", conn)
         conn.close()
 
@@ -122,3 +143,37 @@ spacer_left, main_col, spacer_right = st.columns([0.5, 6, 0.5])
 with main_col:
     st.subheader("Active Camera Status", anchor=False)
     display_camera_status()
+
+
+
+# Shows previous logs in an expander at the bottom
+
+st.markdown("---")
+st.subheader("Historical Threat Logs")
+
+# Use an expander so it doesn't clutter the main real-time feed
+with st.expander("View Previous Detections", expanded=False):
+    try:
+        # Query the last 20 alerts, skipping the very first one (since it's already at the top)
+        conn = sqlite3.connect("../Backend/alerts.db")
+        cursor = conn.cursor()
+        cursor.execute("SELECT timestamp, confidence, image_data FROM events ORDER BY id DESC LIMIT 20 OFFSET 1")
+        historical_alerts = cursor.fetchall()
+        conn.close()
+
+        if not historical_alerts:
+            st.info("No historical logs found.")
+        else:
+            # Create a clean layout for older logs
+            for timestamp, conf, img_data in historical_alerts:
+                col1, col2 = st.columns([1, 2])
+                with col1:
+                    st.markdown(f"**Time:** {timestamp}")
+                    st.markdown(f"**Confidence:** {conf*100:.1f}%")
+                with col2:
+                    # Decode and display the image
+                    img_bytes = base64.b64decode(img_data)
+                    st.image(img_bytes, use_column_width=True)
+                st.divider()
+    except Exception as e:
+        st.error(f"Could not load history: {e}")
