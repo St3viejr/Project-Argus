@@ -1,0 +1,11 @@
+{
+  "GEMINI_API_KEY": "gemini_api_key_here",
+  "LLM_MODEL": "gemini-2.5-flash",
+
+  "YOLO_HUMAN_MODEL": "Project-Argus-main/Frontend/obj_models/0_Standard_YOLO26n.onnx",
+  "YOLO_BANANA_MODEL": "Project-Argus-main/Frontend/obj_models/1_Banana_Sniper.onnx",
+
+  "YOLO_IMG_SIZE": 640,
+  "CONFIDENCE_THRESHOLD": 0.25,
+  "COOLDOWN_SECONDS": 5
+}
