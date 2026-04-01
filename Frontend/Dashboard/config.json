@@ -1,0 +1,8 @@
+{
+  "LLM_MODEL": "openai/gpt-4o-mini",
+  "YOLO_HUMAN_MODEL": "Project-Argus-main/Frontend/obj_models/0_Standard_YOLO26n.onnx",
+  "YOLO_BANANA_MODEL": "Project-Argus-main/Frontend/obj_models/1_Banana_Sniper.onnx",
+  "YOLO_IMG_SIZE": 320,
+  "CONFIDENCE_THRESHOLD": 0.50,
+  "COOLDOWN_SECONDS": 10
+}

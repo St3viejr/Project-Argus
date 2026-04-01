@@ -6,6 +6,8 @@ import threading
 import queue
 import time
 import base64
+import json
+from pathlib import Path
 from ultralytics import YOLO
 from edge_controller import EdgeLogicController
 
@@ -25,6 +27,23 @@ Outline:
 #-----------------------------------------------------------------------
 
 
+# 1. Find the exact folder where this specific Python file lives (the Frontend folder)
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# 2. Map the route from Frontend -> Dashboard -> config.json
+CONFIG_PATH = os.path.join(CURRENT_DIR, "Dashboard", "config.json")
+
+try:
+    with open(CONFIG_PATH, "r") as f:
+        config = json.load(f)
+    COOLDOWN = config.get("COOLDOWN_SECONDS", 5)
+    CONF_THRESHOLD = config.get("CONFIDENCE_THRESHOLD", 0.25)
+except FileNotFoundError:
+    print(f"[Warning] config.json not found at {CONFIG_PATH}. Using defaults.")
+    COOLDOWN = 5
+    CONF_THRESHOLD = 0.25
+
+
 # Create the "bucket" to hold alerts (max 10 to prevent memory overflow)
 alert_queue = queue.Queue(maxsize=10)
 
@@ -40,7 +59,7 @@ def api_worker():
             
         try:
             # Sends the data; 2-second timeout so it doesn't hang
-            res = requests.post(api_url, json=payload, timeout=2.0)
+            res = requests.post(api_url, json=payload, timeout=20.0)
             print(f"[API Thread] Alert Sent Successfully! Backend returned: {res.status_code}")
         except Exception as e:
             print(f"[API Thread Warning] Failed to reach backend: {e}")
@@ -51,9 +70,11 @@ def api_worker():
 worker_thread = threading.Thread(target=api_worker, daemon=True)
 worker_thread.start()
 
-# Initialize the Edge Controller
-edge_logic = EdgeLogicController(confidence_threshold=0.25, cooldown_seconds=2.0)
-
+# Initialize the Edge Controller dynamically from config
+edge_logic = EdgeLogicController(
+    confidence_threshold=CONF_THRESHOLD, 
+    cooldown_seconds=COOLDOWN
+)
 
 # Loads models (If you want to switch out models, you would do it here)
 human_tracker = YOLO('Frontend/obj_models/0_Standard_YOLO26n.onnx', task='detect')  # Your standard/segmented model
@@ -87,13 +108,13 @@ try:
             break
         frame_count += 1
 
+        frame = cv2.flip(frame, 1)
         # Skip frames so the CPU doesn't overclock
         if frame_count % frames_to_skip != 0:
             continue
 
         # Looks for "Person" first: classes=[0] strictly limits standard model to finding people
-        human_results = human_tracker.predict(source=frame, classes=[0], conf=0.5, imgsz=320, verbose=False)
-        
+        human_results = human_tracker.predict(source=frame, classes=[0], conf=CONF_THRESHOLD, imgsz=320, verbose=False)        
         # Draw the human boxes/masks first; keeps label, doesnt show confidence
         annotated_frame = human_results[0].plot(conf=False)
 
@@ -101,8 +122,8 @@ try:
         if len(human_results[0].boxes) > 0:
             
             # Runs the weapon sniper model
-            weapon_results = weapon_sniper.predict(source=frame, conf=0.5, imgsz=320, verbose=False)
-
+            weapon_results = weapon_sniper.predict(source=frame, conf=CONF_THRESHOLD, imgsz=320, verbose=False)
+            
             # Custom hud (Red Boxes + Threat Text)
             results = weapon_results[0]
             boxes = results.boxes

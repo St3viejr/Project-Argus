@@ -37,7 +37,7 @@ def start_project_argus():
         print("[2/3] Launching Streamlit PSOC Dashboard...")
         p_frontend = subprocess.Popen(
             [sys.executable, "-m", "streamlit", "run", "app.py"], 
-            cwd="Frontend",
+            cwd="Frontend/Dashboard",
             stderr=subprocess.DEVNULL  # <-- THIS IS THE MAGIC SILENCER
         )
         processes.append(p_frontend)

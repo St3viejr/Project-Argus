@@ -14,6 +14,7 @@ Functionality:
 '''
 # Database handler class to manage SQLite interactions (OOP style for better organization)
 
+
 class DatabaseHandler:
     def __init__(self, db_name="alerts.db"):
         self.db_name = db_name
@@ -28,22 +29,22 @@ class DatabaseHandler:
                 camera_id TEXT,
                 confidence REAL,
                 timestamp TEXT,
-                image_data TEXT  
+                image_data TEXT,
+                description TEXT 
             )
         """)
         conn.commit()
         conn.close()
         return True
 
-    def insert_event(self, camera_id, confidence, timestamp, image_data):
+    def insert_event(self, camera_id, confidence, timestamp, image_data, description):
         """Inserts a new threat event into the database."""
         conn = sqlite3.connect(self.db_name) 
         cursor = conn.cursor()
         cursor.execute(
-            """INSERT INTO events (camera_id, confidence, timestamp, image_data) 
-            VALUES (?, ?, ?, ?)""",
-            (camera_id, confidence, timestamp, image_data)
-        )
+            """INSERT INTO events (camera_id, confidence, timestamp, image_data, description) 
+            VALUES (?, ?, ?, ?, ?)""",
+            (camera_id, confidence, timestamp, image_data, description))
         conn.commit()
         row_id = cursor.lastrowid
         conn.close()

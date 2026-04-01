@@ -2,7 +2,11 @@ import streamlit as st
 import pandas as pd
 import sqlite3
 import base64
+import time
+import sys
 import os
+
+
 
 #This is the main Streamlit app for the Project Argus PSOC dashboard.
 
@@ -18,10 +22,12 @@ import os
 # to provide real-time updates on camera statuses and detected threats. 
 # Custom CSS is used to style the alert boxes and make the interface visually appealing.'''
 
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.abspath(os.path.join(CURRENT_DIR, "../../Backend/alerts.db"))
+
 
 st.set_page_config(page_title="Project Argus PSOC", layout="wide")
 
-# Side bar for shutdown button and instructions
 with st.sidebar:
     st.header("Mission Control")
     st.markdown("Use this panel to manage the Project Argus system.")
@@ -29,15 +35,13 @@ with st.sidebar:
     st.markdown("---")
     
     if st.button("SHUTDOWN SYSTEM", use_container_width=True, type="primary"):
-        # Drop the signal file into the root folder (up one level from Frontend)
-        with open("../shutdown.signal", "w") as f:
+        with open("../../shutdown.signal", "w") as f:
             f.write("terminate")
         
         st.success("Shutdown signal sent! You can safely close this browser tab.")
-        st.stop() # Stops the Streamlit UI from trying to refresh anymore
+        st.stop()
 
 
-# Custom css for alerts and overall styling
 st.markdown("""
     <style>
     .threat-box {
@@ -56,9 +60,9 @@ st.markdown("""
         margin: 0 !important;
         font-family: "Source Sans Pro", sans-serif;
         font-weight: 790 !important;
-        text-transform: uppercase; /* Ensures it stays ALL CAPS */
-        white-space: nowrap;      /* Keeps it on one line */
-        font-size: 1.6rem !important; /* Larger size like your h2 had */
+        text-transform: uppercase;
+        white-space: nowrap;
+        font-size: 1.6rem !important;
         letter-spacing: -0.5px;
     }
     </style>
@@ -70,8 +74,8 @@ st.title("Project Argus – Physical Security Operations Center (PSOC)")
 @st.fragment(run_every=2)
 def display_camera_status():
     try:
-        conn = sqlite3.connect("../Backend/alerts.db")
-        df_raw = pd.read_sql_query("SELECT camera_id, confidence, timestamp, image_data FROM events ORDER BY timestamp ASC", conn)
+        conn = sqlite3.connect(DB_PATH)
+        df_raw = pd.read_sql_query("SELECT camera_id, confidence, timestamp, image_data, description FROM events ORDER BY timestamp ASC", conn)
         conn.close()
 
         if not df_raw.empty:
@@ -79,9 +83,16 @@ def display_camera_status():
             df_display = df_raw.iloc[::-1]
             latest_alerts = df_display.groupby('camera_id').first().reset_index()
 
+            # CACHE & COOLDOWN INIT
+            if "analysis_cache" not in st.session_state:
+                st.session_state.analysis_cache = {}
+            if "last_api_call" not in st.session_state:
+                st.session_state.last_api_call = 0  # Tracks the last OpenRouter ping
+
             for _, row in latest_alerts.iterrows():
                 confidence_pct = row['confidence'] * 100
-                
+
+
                 if row['image_data']:
                     img_tag = f'<img src="data:image/jpeg;base64,{row["image_data"]}" style="width:100%; border-radius:8px; border: 1px solid #ff4b4b44; margin-bottom: 5px;">'
                     cap_tag = '<p style="text-align:center; color:#aaaaaa; font-size:0.8rem; margin: 0;">Captured Threat Evidence</p>'
@@ -89,12 +100,9 @@ def display_camera_status():
                     img_tag = "<p style='color:#aaaaaa; font-style:italic;'>[NO IMAGE DATA]</p>"
                     cap_tag = ""
 
-                # streamlit columns for side by side layout
-                # 2.5 ratio for the alert box, 1 ratio for the logs
                 alert_col, log_col = st.columns([2.5, 1], gap="large")
 
                 with alert_col:
-                    # REMEMBER: Keep this HTML to the far left due to streamlit's rendering format
                     st.markdown(f"""
 <div class="threat-box" style="padding: 30px; height: 100%;">
 <div class="threat-header" style="font-size: 2rem !important; text-align: center;">⚠️ ALERT: THREAT EMINENT</div>
@@ -115,7 +123,7 @@ def display_camera_status():
 <div style="margin-top: 20px; padding: 15px; background-color: #ff4b4b11; border-left: 5px solid #ff4b4b; border-radius: 6px;">
 <p style="margin: 0; color: #dddddd; font-size: 1.15rem;">
 <b>Description:</b><br>
-<span style="font-style: italic;">[Awaiting LLM Analysis API...]</span>
+<span style="font-style: italic;">{row['description']}</span>
 </p>
 </div>
 </div>
@@ -125,19 +133,17 @@ def display_camera_status():
 """, unsafe_allow_html=True)
 
                 with log_col:
-                    # Added a clean header and a fixed height to the dataframe
                     st.markdown(f"<h4 style='color: #dddddd; margin-top: 0; margin-bottom: 15px;'>Log History</h4>", unsafe_allow_html=True)
                     camera_history = df_display[df_display['camera_id'] == row['camera_id']]
                     st.dataframe(camera_history, hide_index=True, width="stretch", height=420)
-                    
+
         else:
             st.success("System Status: No active threats detected.")
-                        
+
     except Exception as e:
         st.error(f"Database Connection Error: {e}")
 
 
-# Widened the center column so the side-by-side layout is more structured
 spacer_left, main_col, spacer_right = st.columns([0.5, 6, 0.5])
 
 with main_col:
@@ -145,33 +151,27 @@ with main_col:
     display_camera_status()
 
 
-
-# Shows previous logs in an expander at the bottom
-
 st.markdown("---")
 st.subheader("Historical Threat Logs")
 
-# Use an expander so it doesn't clutter the main real-time feed
 with st.expander("View Previous Detections", expanded=False):
     try:
-        # Query the last 20 alerts, skipping the very first one (since it's already at the top)
-        conn = sqlite3.connect("../Backend/alerts.db")
+        conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
-        cursor.execute("SELECT timestamp, confidence, image_data FROM events ORDER BY id DESC LIMIT 20 OFFSET 1")
+        cursor.execute("SELECT timestamp, confidence, image_data, description FROM events ORDER BY id DESC LIMIT 20 OFFSET 1")
         historical_alerts = cursor.fetchall()
         conn.close()
 
         if not historical_alerts:
             st.info("No historical logs found.")
         else:
-            # Create a clean layout for older logs
-            for timestamp, conf, img_data in historical_alerts:
+            for timestamp, conf, img_data, description in historical_alerts:
                 col1, col2 = st.columns([1, 2])
                 with col1:
                     st.markdown(f"**Time:** {timestamp}")
                     st.markdown(f"**Confidence:** {conf*100:.1f}%")
+                    st.markdown(f"**AI Log:** {description}")
                 with col2:
-                    # Decode and display the image
                     img_bytes = base64.b64decode(img_data)
                     st.image(img_bytes, use_column_width=True)
                 st.divider()
