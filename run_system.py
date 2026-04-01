@@ -28,7 +28,7 @@ def start_project_argus():
         print("\n[1/3] Activating FastAPI Backend...")
         # sys.executable ensures it uses your current active Python/Conda environment
         # Uses the Uvicorn module to explicitly host the 'app' object inside main.py
-        p_backend = subprocess.Popen([sys.executable, "-m", "uvicorn", "main:app", "--port", "8000"], cwd="Backend")
+        p_backend = subprocess.Popen([sys.executable, "-m", "uvicorn", "server:app", "--port", "8000"], cwd="Backend")
         processes.append(p_backend)
         
         time.sleep(3) 

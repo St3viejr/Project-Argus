@@ -48,15 +48,13 @@ class EdgeLogicController:
         Main entry point: Filters, formats, and validates raw YOLO data.
         Returns the payload if it passes all checks, otherwise returns None.
         """
-        # Checks Confidence
+
         if not self.is_valid_confidence(confidence):
             return None
             
-        # Checks Cooldown
         if not self.is_cooldown_ready():
             return None
 
-        # Formats the Payload
         payload = self.create_alert_payload(confidence, camera_id, image_data)
 
         # Validate Schema from alert_schema.json

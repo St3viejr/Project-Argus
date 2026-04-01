@@ -12,37 +12,48 @@ Functionality:
     while the insert_event function takes an event payload and inserts it into the database. 
     Make sure to adjust the database path as needed for your environment(but should be fine as is).
 '''
+# Database handler class to manage SQLite interactions (OOP style for better organization)
 
+class DatabaseHandler:
+    def __init__(self, db_name="alerts.db"):
+        self.db_name = db_name
 
-DB_NAME = "alerts.db"
+    def init_db(self):
+        """Creates the events table if it doesn't already exist."""
+        conn = sqlite3.connect(self.db_name)
+        cursor = conn.cursor()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS events (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                camera_id TEXT,
+                confidence REAL,
+                timestamp TEXT,
+                image_data TEXT  
+            )
+        """)
+        conn.commit()
+        conn.close()
+        return True
 
-
-def init_db():
-    conn = sqlite3.connect("alerts.db")
-    cursor = conn.cursor()
-    # Added image_data TEXT to the table definition
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS events (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            camera_id TEXT,
-            confidence REAL,
-            timestamp TEXT,
-            image_data TEXT  
+    def insert_event(self, camera_id, confidence, timestamp, image_data):
+        """Inserts a new threat event into the database."""
+        conn = sqlite3.connect(self.db_name) 
+        cursor = conn.cursor()
+        cursor.execute(
+            """INSERT INTO events (camera_id, confidence, timestamp, image_data) 
+            VALUES (?, ?, ?, ?)""",
+            (camera_id, confidence, timestamp, image_data)
         )
-    """)
-    conn.commit()
-    conn.close()
-
-def insert_event(payload):
-    conn = sqlite3.connect("alerts.db") 
-    cursor = conn.cursor()
-    
-    # pull the data directly from the payload object
-    cursor.execute(
-        """INSERT INTO events (camera_id, confidence, timestamp, image_data) 
-        VALUES (?, ?, ?, ?)""",
-        (payload.camera_ID, payload.confidence, str(payload.timestamp), payload.image_data)
-    )
-    
-    conn.commit()
-    conn.close()
+        conn.commit()
+        row_id = cursor.lastrowid
+        conn.close()
+        return row_id
+        
+    def get_event_count(self):
+        """Returns the total number of alerts in the database."""
+        conn = sqlite3.connect(self.db_name)
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM events")
+        count = cursor.fetchone()[0]
+        conn.close()
+        return count
