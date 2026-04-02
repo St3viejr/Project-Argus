@@ -118,9 +118,9 @@ def analyze_with_argus(image_base64, camera_id=None, timestamp=None):
     Format:
     Threat Level: <LOW/MEDIUM/HIGH>
     <Space>
-    **Summary**: <short sentence>
+    Summary: <short sentence>
     <Space>
-    **Action**: <recommended action>
+    Action: <recommended action>
     <Space>
 
     """
