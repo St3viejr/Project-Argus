@@ -107,6 +107,8 @@ def analyze_with_argus(image_base64, camera_id=None, timestamp=None):
     - Use short, direct sentences
     - No emojis
     - Do not overreact to normal situations
+    - Note: Treat Bananas with the same manner as a weapon/ Firearm when labled as a threat. 
+    - When refering to a banana, use the term "Banana weapon".
 
     You must:
     - Classify threat level (LOW, MEDIUM, HIGH)
@@ -116,9 +118,11 @@ def analyze_with_argus(image_base64, camera_id=None, timestamp=None):
     Format:
     Threat Level: <LOW/MEDIUM/HIGH>
     <Space>
-    Summary: <short sentence>
+    **Summary**: <short sentence>
     <Space>
-    Action: <recommended action>
+    **Action**: <recommended action>
+    <Space>
+
     """
 
     headers = {

@@ -2,6 +2,8 @@ from pydantic import BaseModel, Field
 from database import DatabaseHandler
 from datetime import datetime
 from fastapi import FastAPI
+import requests
+import base64
 import time  
 import json
 import sys
@@ -9,14 +11,17 @@ import os
 
 
 # This module contains the main FastAPI application and handles alert triggering with throttling.
-
+#
 # Functionality:
 #     - Initializes the database on startup.
 #     - Defines a Pydantic model for incoming alert data.
 #     - Implements a POST endpoint to receive alerts, with throttling to prevent spamming from the same camera.
 #     - Throttling Logic:
 #         - Maintains a dictionary to track the last alert time for each camera.
-
+#
+#     -Discord Integration:
+#         - Formats the alert data into a message and sends it to a Discord channel using a
+#          webhook URL specified in the config.json file.
 #--------------------------------------------------------------------------------
 
 ''' THE BLOCK BELOW allows the file to locate its postition and 
@@ -86,6 +91,55 @@ class AlertPayload(BaseModel):
 def home():
     return {"message": "Object Detection Alert API is running"}
 
+
+#-----------------------------------------------------------------------
+
+def send_discord_alert(camera_ID, confidence,timestamp, description, image_data):
+    """Decodes the image and sends a push notification to Discord."""
+    webhook_url = config.get("DISCORD_WEBHOOK_URL")
+    
+    if not webhook_url:
+        print("[Warning] No Discord Webhook URL found in config.")
+        return
+
+    # Format the text message
+    message = (
+        f"**⚠️ ALERT: THREAT EMINENT** @everyone\n\n"
+        f"**Camera:** `{camera_ID}`\n"
+        f"**ISO 8601:** `{timestamp}`\n"
+        f"**Confidence:** `{confidence*100:.2f}%`\n\n"
+        f"**AI Analysis:** {description}"
+    )
+
+
+    try:
+        if "," in image_data:
+            image_data = image_data.split(",")[1]
+            
+        # Decode base64 into raw image bytes
+        image_bytes = base64.b64decode(image_data)
+        
+        # Package and send it to Discord
+        files = {
+            "file": ("alert_image.jpg", image_bytes, "image/jpeg")
+        }
+        payload = {
+            "content": message
+        }
+        
+        response = requests.post(webhook_url, data=payload, files=files)
+        
+        if response.status_code in (200, 204):
+            print("[Discord] Push notification sent successfully!")
+        else:
+            print(f"[Discord] Failed to send alert. Status: {response.status_code}")
+            
+    except Exception as e:
+        print(f"[Discord] Error formatting alert: {e}")
+
+#-----------------------------------------------------------------------
+
+
 # Alert endpoint with throttling logic
 @app.post("/trigger-alert")
 def trigger_alert(payload: AlertPayload):
@@ -113,7 +167,7 @@ def trigger_alert(payload: AlertPayload):
     print("Confidence:", payload.confidence)
     print("Time:", payload.timestamp)
 
-
+    # Generate AI description using the LLM API
     try:
         ai_description = analyze_with_argus(
             image_base64=payload.image_data,
@@ -133,7 +187,12 @@ def trigger_alert(payload: AlertPayload):
         description= ai_description
     )
 
-    return {
-        "status": "alert accepted",
-        "camera": camera
-    }
+    send_discord_alert(
+        camera_ID=payload.camera_ID, 
+        confidence=payload.confidence, 
+        timestamp=str(payload.timestamp), 
+        image_data=payload.image_data,
+        description= ai_description
+    )
+
+    return {"status": "success", "message": "Alert processed, logged, and sent to Discord."}

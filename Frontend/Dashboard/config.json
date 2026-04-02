@@ -4,5 +4,6 @@
   "WEAPON_SNIPER_MODEL": "Frontend/obj_models/1_Banana_Sniper.onnx",
   "YOLO_IMG_SIZE": 320,
   "CONFIDENCE_THRESHOLD": 0.50,
-  "COOLDOWN_SECONDS": 10
+  "COOLDOWN_SECONDS": 10,
+  "DISCORD_WEBHOOK_URL": "https://discord.com/api/webhooks/1489271943797670140/KWKxqI-jSq2Sq6mULMeeXTMRfkV5cbEPdPULrvZxaqxhObQMixU-AIfqbzWPjwcpX22t"
 }
