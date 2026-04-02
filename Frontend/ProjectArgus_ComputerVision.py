@@ -1,24 +1,23 @@
-import os
-import cv2
-import ctypes
-import requests
-import threading
-import queue
-import time
-import base64
-import json
-from pathlib import Path
-from ultralytics import YOLO
 from edge_controller import EdgeLogicController
+from ultralytics import YOLO
+import threading
+import requests
+import ctypes
+import base64
+import queue
+import json
+import cv2
+import os
+
 
 '''Added Sections (1-5) for clarity, because the file is a little long with ~180 lines of code.
 
 Outline:
-1. Setup Alert Queue, API Worker Thread, and Edge Controller
-2. Computer Vision Loop with Custom HUD
-3. Alert Creation and Queueing Logic
-4. Display and Window Management
-5. GRACEFUL SHUTDOWN
+    1. Setup Alert Queue, API Worker Thread, and Edge Controller
+    2. Computer Vision Loop with Custom HUD
+    3. Alert Creation and Queueing Logic
+    4. Display and Window Management
+    5. GRACEFUL SHUTDOWN
 '''
 
 
@@ -27,10 +26,7 @@ Outline:
 #-----------------------------------------------------------------------
 
 
-# 1. Find the exact folder where this specific Python file lives (the Frontend folder)
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
-
-# 2. Map the route from Frontend -> Dashboard -> config.json
 CONFIG_PATH = os.path.join(CURRENT_DIR, "Dashboard", "config.json")
 
 try:
@@ -38,6 +34,7 @@ try:
         config = json.load(f)
     COOLDOWN = config.get("COOLDOWN_SECONDS", 5)
     CONF_THRESHOLD = config.get("CONFIDENCE_THRESHOLD", 0.25)
+    YOLO_IMG_SIZE = config.get("YOLO_IMG_SIZE", 320)
 except FileNotFoundError:
     print(f"[Warning] config.json not found at {CONFIG_PATH}. Using defaults.")
     COOLDOWN = 5
@@ -53,6 +50,7 @@ def api_worker():
     
     while True:
         payload = alert_queue.get()
+
         # Stops signal
         if payload is None: 
             break
@@ -76,11 +74,13 @@ edge_logic = EdgeLogicController(
     cooldown_seconds=COOLDOWN
 )
 
-# Loads models (If you want to switch out models, you would do it here)
-human_tracker = YOLO('Frontend/obj_models/0_Standard_YOLO26n.onnx', task='detect')  # Your standard/segmented model
-weapon_sniper = YOLO('Frontend/obj_models/1_Banana_Sniper.onnx', task='detect')  # Your custom A100 weapon weights
+# Loads models:
+YOLO_HUMAN_MODEL = config.get("YOLO_HUMAN_MODEL")
+WEAPON_SNIPER_MODEL = config.get("WEAPON_SNIPER_MODEL")
 
-# Opens webcam
+human_tracker = YOLO(YOLO_HUMAN_MODEL, task='detect')
+weapon_sniper = YOLO(WEAPON_SNIPER_MODEL, task='detect')
+
 cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
 
 
@@ -109,12 +109,11 @@ try:
         frame_count += 1
 
         frame = cv2.flip(frame, 1)
-        # Skip frames so the CPU doesn't overclock
         if frame_count % frames_to_skip != 0:
             continue
 
         # Looks for "Person" first: classes=[0] strictly limits standard model to finding people
-        human_results = human_tracker.predict(source=frame, classes=[0], conf=CONF_THRESHOLD, imgsz=320, verbose=False)        
+        human_results = human_tracker.predict(source=frame, classes=[0], conf=CONF_THRESHOLD, imgsz=YOLO_IMG_SIZE, verbose=False)        
         # Draw the human boxes/masks first; keeps label, doesnt show confidence
         annotated_frame = human_results[0].plot(conf=False)
 
@@ -122,7 +121,7 @@ try:
         if len(human_results[0].boxes) > 0:
             
             # Runs the weapon sniper model
-            weapon_results = weapon_sniper.predict(source=frame, conf=CONF_THRESHOLD, imgsz=320, verbose=False)
+            weapon_results = weapon_sniper.predict(source=frame, conf=CONF_THRESHOLD, imgsz=YOLO_IMG_SIZE, verbose=False)
             
             # Custom hud (Red Boxes + Threat Text)
             results = weapon_results[0]

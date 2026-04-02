@@ -1,8 +1,8 @@
-import json
-import time
-import base64
-from datetime import datetime, timezone
 from jsonschema import validate, ValidationError
+from datetime import datetime, timezone
+import base64
+import time
+import json
 
 ''' This the payload controller that lives on the edge (i.e. in the computer vision node). 
 
@@ -16,18 +16,19 @@ Functinoality:
 
 
 class EdgeLogicController:
-    def __init__(self, confidence_threshold=0.25, cooldown_seconds=2.0, schema_path="Frontend/alert_schema.json"):
+    def __init__(self, confidence_threshold=0.25, cooldown_seconds=2.0, schema_path="Frontend/alert_schema.json", enable_schema_validation=False):
         self.threshold = confidence_threshold
         self.cooldown_seconds = cooldown_seconds
         self.last_alert_time = 0
+        self.alert_schema = {}
         
         # Load the schema rulebook into memory once upon initialization
-        try:
-            with open(schema_path, "r") as file:
-                self.alert_schema = json.load(file)
-        except FileNotFoundError:
-            print(f"[Edge Controller Error] Schema file {schema_path} not found!")
-            self.alert_schema = {}
+        if enable_schema_validation:
+            try:
+                with open(schema_path, "r") as file:
+                    self.alert_schema = json.load(file)
+            except FileNotFoundError:
+                print(f"[Edge Controller Error] Schema file {schema_path} not found!")
 
     def is_valid_confidence(self, confidence):
         return confidence >= self.threshold
@@ -44,10 +45,8 @@ class EdgeLogicController:
         }
 
     def process_detection(self, confidence, camera_id, image_data):
-        """
-        Main entry point: Filters, formats, and validates raw YOLO data.
-        Returns the payload if it passes all checks, otherwise returns None.
-        """
+        # Main entry point: Filters, formats, and validates raw YOLO data.
+        # Returns the payload if it passes all checks, otherwise returns None.
 
         if not self.is_valid_confidence(confidence):
             return None

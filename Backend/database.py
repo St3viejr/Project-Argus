@@ -6,12 +6,13 @@ Functionality:
     -Provides functions to initialize the database and insert new events.
 
     -database schema includes fields for camera ID, confidence level, 
-    timestamp, and image data (stored as a base64 string).
+    timestamp, image data (stored as a base64 string), and LLM API description.
 
     -The init_db function creates the events table if it doesn't already exist, 
     while the insert_event function takes an event payload and inserts it into the database. 
     Make sure to adjust the database path as needed for your environment(but should be fine as is).
 '''
+
 # Database handler class to manage SQLite interactions (OOP style for better organization)
 
 
