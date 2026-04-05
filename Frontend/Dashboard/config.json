@@ -2,8 +2,9 @@
   "LLM_MODEL": "openai/gpt-4o-mini",
   "YOLO_HUMAN_MODEL": "Frontend/obj_models/0_Standard_YOLO26n.onnx",
   "WEAPON_SNIPER_MODEL": "Frontend/obj_models/1_Banana_Sniper.onnx",
-  "YOLO_IMG_SIZE": 320,
-  "CONFIDENCE_THRESHOLD": 0.50,
+  "0_YOLO_IMG_SIZE": 320,
+  "1_YOLO_IMG_SIZE": 320,
+  "CONFIDENCE_THRESHOLD": 0.75,
   "COOLDOWN_SECONDS": 10,
   "DISCORD_WEBHOOK_URL": "put_your_webhook_url_here"
 }
