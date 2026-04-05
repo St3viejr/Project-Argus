@@ -31,6 +31,8 @@ The system is modularly split into three concurrent nodes:
 ## Directory Structure
 
 ```text
+Project-Argus/
+│
 ├── Backend
 │   ├── database.py             # SQLite connection and schema logic
 │   └── server.py               # FastAPI backend & Discord webhook dispatcher
