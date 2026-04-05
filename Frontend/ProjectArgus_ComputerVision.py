@@ -34,7 +34,9 @@ try:
         config = json.load(f)
     COOLDOWN = config.get("COOLDOWN_SECONDS", 5)
     CONF_THRESHOLD = config.get("CONFIDENCE_THRESHOLD", 0.25)
-    YOLO_IMG_SIZE = config.get("YOLO_IMG_SIZE", 320)
+    YOLO_IMG_SIZE_0 = config.get("0_YOLO_IMG_SIZE", 320)
+    YOLO_IMG_SIZE_1 = config.get("1_YOLO_IMG_SIZE", 320)
+
 except FileNotFoundError:
     print(f"[Warning] config.json not found at {CONFIG_PATH}. Using defaults.")
     COOLDOWN = 5
@@ -113,7 +115,7 @@ try:
             continue
 
         # Looks for "Person" first: classes=[0] strictly limits standard model to finding people
-        human_results = human_tracker.predict(source=frame, classes=[0], conf=CONF_THRESHOLD, imgsz=YOLO_IMG_SIZE, verbose=False)        
+        human_results = human_tracker.predict(source=frame, classes=[0], conf=CONF_THRESHOLD, imgsz=YOLO_IMG_SIZE_0, verbose=False)        
         # Draw the human boxes/masks first; keeps label, doesnt show confidence
         annotated_frame = human_results[0].plot(conf=False)
 
@@ -121,7 +123,7 @@ try:
         if len(human_results[0].boxes) > 0:
             
             # Runs the weapon sniper model
-            weapon_results = weapon_sniper.predict(source=frame, conf=CONF_THRESHOLD, imgsz=YOLO_IMG_SIZE, verbose=False)
+            weapon_results = weapon_sniper.predict(source=frame, conf=CONF_THRESHOLD, imgsz=YOLO_IMG_SIZE_1, verbose=False)
             
             # Custom hud (Red Boxes + Threat Text)
             results = weapon_results[0]
