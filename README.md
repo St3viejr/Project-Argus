@@ -31,31 +31,31 @@ The system is modularly split into three concurrent nodes:
 ## Directory Structure
 
 ```text
-Project-Argus/
+Project-Argus/ (276,026)        # Total lines (1,236 code/config + 274,790 models)
 │
 ├── Backend
-│   ├── database.py             # SQLite connection and schema logic
-│   └── server.py               # FastAPI backend & Discord webhook dispatcher
+│   ├── database.py (61)        # SQLite connection and schema logic
+│   └── server.py (198)         # FastAPI backend & Discord webhook dispatcher
 │
 ├── Frontend
 │   ├── Dashboard
-│   │   ├── LLM_API.py          # OpenRouter integration for threat analysis
-│   │   ├── app.py              # Streamlit PSOC Dashboard
-│   │   └── config.json         # Centralized configuration (API keys, models, thresholds)
+│   │   ├── LLM_API.py (214)    # OpenRouter integration for threat analysis
+│   │   ├── app.py (195)        # Streamlit PSOC Dashboard
+│   │   └── config.json (10)    # Centralized configuration (API keys, models, thresholds)
 │   │
-│   ├── ProjectArgus_ComputerVision.py # Main OpenCV & Ultralytics tracking loop
-│   ├── alert_schema.json       # JSON validation rules for payload security
-│   ├── edge_controller.py      # Edge payload formatting & cooldown logic
+│   ├── ProjectArgus_ComputerVision.py (218) # Main OpenCV & Ultralytics tracking loop
+│   ├── alert_schema.json (25)  # JSON validation rules for payload security
+│   ├── edge_controller.py (71) # Edge payload formatting & cooldown logic
 │   └── obj_models
-│       ├── 0_Standard_YOLO26n.onnx
-│       ├── 1_Banana_Sniper.onnx
-│       ├── 2_firearm.onnx
-│       └── 3_(untested) - firearmV2.onnx
+│       ├── 0_Standard_YOLO26n.onnx (68935)
+│       ├── 1_Banana_Sniper.onnx (68969)
+│       ├── 2_firearm.onnx (68520)
+│       └── 3_(untested) - firearmV2.onnx (68366)
 │
-├── README.md
-├── requirements.txt            # Python dependencies (e.g., opencv-python, ultralytics)
-├── run_system.py               # Unified multi-node Python launcher
-└── start_argus.bat             # Windows one-click auto-installer & launcher
+├── README.md (117)
+├── requirements.txt (10)       # Python dependencies (e.g., opencv-python, ultralytics)
+├── run_system.py (94)          # Unified multi-node Python launcher
+└── start_argus.bat (23)        # Windows one-click auto-installer & launcher
 ```
 *(Note: `.env`, `venv/`, and `__pycache__/` directories are required locally but intentionally excluded from version control via `.gitignore` for security).*
 
