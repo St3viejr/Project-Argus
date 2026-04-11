@@ -16,7 +16,7 @@ Functinoality:
 
 
 class EdgeLogicController:
-    def __init__(self, confidence_threshold=0.25, cooldown_seconds=2.0, schema_path="Frontend/alert_schema.json", enable_schema_validation=False):
+    def __init__(self, confidence_threshold=0.25, cooldown_seconds=2.0, schema_path="Frontend/alert_schema.json", enable_schema_validation=True):
         self.threshold = confidence_threshold
         self.cooldown_seconds = cooldown_seconds
         self.last_alert_time = 0
