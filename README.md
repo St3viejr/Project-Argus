@@ -31,29 +31,41 @@ The system is modularly split into three concurrent nodes:
 ## Directory Structure
 
 ```text
-Project-Argus/ (276,026)        # Total lines (1,236 code/config + 274,790 models)
+Project-Argus/ (459,877)        # Total lines (1,249 code/config + 458,628 models)
 │
-├── Backend
+├── Backend/
 │   ├── database.py (61)        # SQLite connection and schema logic
 │   └── server.py (198)         # FastAPI backend & Discord webhook dispatcher
 │
-├── Frontend
-│   ├── Dashboard
+├── Frontend/
+│   ├── Dashboard/
 │   │   ├── LLM_API.py (214)    # OpenRouter integration for threat analysis
 │   │   ├── app.py (195)        # Streamlit PSOC Dashboard
 │   │   └── config.json (10)    # Centralized configuration (API keys, models, thresholds)
 │   │
-│   ├── ProjectArgus_ComputerVision.py (218) # Main OpenCV & Ultralytics tracking loop
+│   ├── ProjectArgus_ComputerVision.py (230) # Main OpenCV & Ultralytics tracking loop
 │   ├── alert_schema.json (25)  # JSON validation rules for payload security
 │   ├── edge_controller.py (71) # Edge payload formatting & cooldown logic
-│   └── obj_models
+│   └── obj_models/
+│       ├── FP16_BS_openvino_model/
+│       │   ├── best_a100.bin (22829)
+│       │   ├── best_a100.xml (17784)
+│       │   └── metadata.yaml (24)
+│       │
+│       ├── INT8_SY26_openvino_model/
+│       │   ├── yolo26n.bin (63070)
+│       │   ├── yolo26n.xml (25505)
+│       │   └── metadata.yaml (103)
+│       │
 │       ├── 0_Standard_YOLO26n.onnx (68935)
 │       ├── 1_Banana_Sniper.onnx (68969)
 │       ├── 2_firearm.onnx (68520)
-│       └── 3_(untested) - firearmV2.onnx (68366)
+│       ├── 3_(untested) - firearmV2.onnx (68366)
+│       ├── best_a100.pt (25499)
+│       └── yolo26n.pt (29024)
 │
 ├── README.md (117)
-├── requirements.txt (10)       # Python dependencies (e.g., opencv-python, ultralytics)
+├── requirements.txt (11)       # Python dependencies (e.g., opencv-python, ultralytics)
 ├── run_system.py (94)          # Unified multi-node Python launcher
 └── start_argus.bat (23)        # Windows one-click auto-installer & launcher
 ```
