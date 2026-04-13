@@ -1,7 +1,7 @@
 {
   "LLM_MODEL": "openai/gpt-4o-mini",
-  "YOLO_HUMAN_MODEL": "Frontend/obj_models/0_Standard_YOLO26n.onnx",
-  "WEAPON_SNIPER_MODEL": "Frontend/obj_models/1_Banana_Sniper.onnx",
+  "YOLO_HUMAN_MODEL": "Frontend/obj_models/INT8_SY26_openvino_model",
+  "WEAPON_SNIPER_MODEL": "Frontend/obj_models/FP16_BS_openvino_model",
   "0_YOLO_IMG_SIZE": 320,
   "1_YOLO_IMG_SIZE": 320,
   "CONFIDENCE_THRESHOLD": 0.75,

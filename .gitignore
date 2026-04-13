@@ -35,3 +35,5 @@ Thumbs.db
 # =========================
 runs/
 outputs/
+
+test.py

@@ -5,6 +5,7 @@ import requests
 import ctypes
 import base64
 import queue
+import time
 import json
 import cv2
 import os
@@ -114,6 +115,8 @@ try:
         if frame_count % frames_to_skip != 0:
             continue
 
+        start_time = time.time()
+
         # Looks for "Person" first: classes=[0] strictly limits standard model to finding people
         human_results = human_tracker.predict(source=frame, classes=[0], conf=CONF_THRESHOLD, imgsz=YOLO_IMG_SIZE_0, verbose=False)        
         # Draw the human boxes/masks first; keeps label, doesnt show confidence
@@ -187,7 +190,13 @@ try:
 #-----------------------------------------------------------------------
 # Section 4: Display and Window Management
 #-----------------------------------------------------------------------
+        end_time = time.time()
+        if (end_time - start_time) > 0:
+            fps = 1.0 / (end_time - start_time)
+        else:
+            fps = 0.0
 
+        cv2.putText(annotated_frame, f"FPS: {fps:.1f}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
 
         # Shows the live feed
         cv2.imshow('Project Argus: Dual Tracking', annotated_frame)
